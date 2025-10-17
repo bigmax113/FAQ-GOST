@@ -20,7 +20,6 @@ MAX_OUTPUT_TOKENS = 1900000
 OUTPUT_TOKENS = 10000
 
 
-
 # Google Drive API Key from environment
 GOOGLE_API_KEY = os.environ.get("GOOGLE_API_KEY")
 
@@ -239,7 +238,7 @@ def submit_question():
         return jsonify({"error": "Нет данных для поиска"}), 400
 
     context = cache["doc_cache"]
-    max_chars = MAX_TOKENS * 4  # приблизительная длина по токенам
+    max_chars = MAX_OUTPUT_TOKENS * 4  # приблизительная длина по токенам
     chunk_size = max_chars
     num_chunks = (len(context) // chunk_size) + 1
     headers = {"Authorization": f"Bearer {XAI_API_KEY}", "Content-Type": "application/json"}
@@ -264,7 +263,7 @@ def submit_question():
             resp = requests.post(API_URL, headers=headers, json={
                 "model": MODEL,
                 "messages": [{"role": "user", "content": prompt}],
-                "max_tokens": OUTPUT_TOKENS
+                "max_output_tokens": OUTPUT_TOKENS
             })
             resp.raise_for_status()
             part_answer = resp.json()["choices"][0]["message"]["content"]
@@ -283,7 +282,7 @@ def submit_question():
         final_resp = requests.post(API_URL, headers=headers, json={
             "model": MODEL,
             "messages": [{"role": "user", "content": final_prompt}],
-            "max_tokens": OUTPUT_TOKENS
+            "max_output_tokens": OUTPUT_TOKENS
         })
         final_resp.raise_for_status()
         final_answer = final_resp.json()["choices"][0]["message"]["content"]
