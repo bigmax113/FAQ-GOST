@@ -16,8 +16,9 @@ app = Flask(__name__, static_folder='.')
 XAI_API_KEY = os.environ.get("XAI_API_KEY")
 API_URL = "https://api.x.ai/v1/chat/completions"
 MODEL = "grok-4-fast-reasoning"
-MAX_TOKENS = 1900000
+MAX_OUTPUT_TOKENS = 1900000
 OUTPUT_TOKENS = 10000
+
 
 
 # Google Drive API Key from environment
