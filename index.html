@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Декларации-Директивы</title>
+  <script src="https://cdn.jsdelivr.net/npm/react@18.2.0/umd/react.production.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/react-dom@18.2.0/umd/react-dom.production.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/axios@1.7.7/dist/axios.min.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@babel/standalone@7.24.7/babel.min.js"></script>
+  <style>
+    .spinner {
+      border: 4px solid #f3f3f3;
+      border-top: 4px solid #3b82f6;
+      border-radius: 50%;
+      width: 16px;
+      height: 16px;
+      animation: spin 1s linear infinite;
+      display: inline-block;
+      margin-right: 6px;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body class="bg-gray-100 min-h-screen flex flex-col items-center justify-start p-4">
+  <div id="root" class="w-full max-w-4xl mt-8"></div>
+
+  <script type="text/babel">
+    function App() {
+      const [selectedFolder, setSelectedFolder] = React.useState("Декларации");
+      const [question, setQuestion] = React.useState("");
+      const [answer, setAnswer] = React.useState("");
+      const [status, setStatus] = React.useState("Идёт инициализация...");
+      const [isLoading, setIsLoading] = React.useState(false);
+
+      React.useEffect(() => {
+        initializeFolders();
+      }, []);
+
+      const initializeFolders = async () => {
+        try {
+          const response = await axios.post("/api/initialize");
+          setStatus(response.data.message);
+        } catch (error) {
+          setStatus(`Ошибка инициализации: ${error.response?.data?.error || error.message}`);
+        }
+      };
+
+      const checkUpdates = async () => {
+        setIsLoading(true);
+        try {
+          const response = await axios.post("/api/check_updates");
+          setStatus(response.data.message);
+        } catch (error) {
+          setStatus(`Ошибка проверки обновлений: ${error.response?.data?.error || error.message}`);
+        } finally {
+          setIsLoading(false);
+        }
+      };
+
+      const submitQuestion = async () => {
+        if (!question.trim()) {
+          setAnswer("Пожалуйста, введите вопрос.");
+          return;
+        }
+        setIsLoading(true);
+        document.body.style.cursor = "wait";
+        try {
+          const response = await axios.post("/api/submit_question", {
+            folder: selectedFolder,
+            question: question,
+          });
+          setAnswer(response.data.answer);
+          setStatus("Вопрос обработан");
+        } catch (error) {
+          setAnswer(`Ошибка: ${error.response?.data?.error || error.message}`);
+          setStatus("Ошибка при обработке вопроса");
+        } finally {
+          setIsLoading(false);
+          document.body.style.cursor = "default";
+        }
+      };
+
+      const descriptions = {
+        "Декларации": `Представленные тексты представляют Директивы и Декларации используемые в Европейском союзе (ЕС) и посвящённые гармонизации законодательства государств-членов в отношении различных типов продукции. Один из основных фокусов — это безопасность и электромагнитная совместимость (ЭМС) различных устройств и оборудования.`,
+        
+        "Стандарты": `Раздел посвящён гармонизированным стандартам Европейского Союза, обеспечивающим единообразие требований к качеству, безопасности и энергоэффективности продукции. Здесь рассматриваются технические спецификации, которые позволяют производителям доказать соответствие директивам ЕС.`,
+        
+        "FAQ": `Этот раздел содержит ответы на часто задаваемые вопросы, связанные с внутренней структурой отдела технических писателей, их обязанностей, требований к оформлению документации и прочим аспектом взаимодействия внутри отдела.`,
+      };
+
+      return (
+        <div className="bg-white rounded-xl shadow-md p-6">
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center space-x-3">
+              <div className="text-3xl">🤖</div>
+              <h1 className="text-2xl font-semibold text-gray-800">
+                {selectedFolder === "Декларации" && "Декларации-Директивы"}
+                {selectedFolder === "Стандарты" && "Гармонизированные стандарты"}
+                {selectedFolder === "FAQ" && "Часто задаваемые вопросы"}
+              </h1>
+            </div>
+          </div>
+
+          <div className="prose max-w-none mb-6 text-gray-800 whitespace-pre-line">
+            {descriptions[selectedFolder]}
+          </div>
+
+          <div className="border-t border-gray-200 my-4"></div>
+
+          <div className="mb-3 flex flex-col space-y-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex space-x-3 items-center">
+              {["Декларации", "Стандарты", "FAQ"].map((folder) => (
+                <label key={folder} className="inline-flex items-center space-x-1">
+                  <input
+                    type="radio"
+                    name="folder"
+                    value={folder}
+                    checked={selectedFolder === folder}
+                    onChange={() => setSelectedFolder(folder)}
+                    className="text-blue-600 focus:ring-blue-500"
+                  />
+                  <span className="text-gray-700">{folder}</span>
+                </label>
+              ))}
+            </div>
+
+            <div className="flex items-center space-x-3">
+              <button
+                onClick={checkUpdates}
+                disabled={isLoading}
+                className="text-sm bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 disabled:bg-blue-300"
+              >
+                Проверить обновления
+              </button>
+            </div>
+          </div>
+
+          <div className="text-sm text-gray-600 mb-4">
+            <b>Статус:</b> {isLoading && <span className="spinner"></span>} {status}
+          </div>
+
+          <div className="bg-gray-50 border rounded-lg p-4 h-64 overflow-y-auto text-gray-800 mb-6">
+            <pre className="whitespace-pre-wrap">{answer}</pre>
+          </div>
+
+          <div className="flex items-center space-x-2">
+            <input
+              type="text"
+              value={question}
+              onChange={(e) => setQuestion(e.target.value)}
+              onKeyPress={(e) => e.key === 'Enter' && submitQuestion()}
+              className="flex-1 p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Введите текст..."
+            />
+            <button
+              onClick={submitQuestion}
+              disabled={isLoading}
+              className="bg-blue-500 text-white px-5 py-3 rounded-lg hover:bg-blue-600 disabled:bg-blue-300"
+            >
+              {isLoading ? "Обработка..." : "➤"}
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    ReactDOM.render(<App />, document.getElementById("root"));
+  </script>
+</body>
+</html>
